@@ -9,4 +9,4 @@ def packet_handler(pkt):
 
 
 print("Sniffing...")
-sniff(filter="udp port 53 and ip src 10.10.0.2", prn=packet_handler)
+sniff(filter="udp port 53", prn=packet_handler)

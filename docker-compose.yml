@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   forwarder:
     restart: always
@@ -20,6 +19,8 @@ services:
     networks:
       vpcbr:
         ipv4_address: 10.10.0.3
+    dns:
+      - 10.10.0.2
   cache:
     restart: always
     build: ./cache
@@ -30,6 +31,27 @@ services:
     networks:
       vpcbr:
         ipv4_address: 10.10.0.4
+  malicious-server:
+    restart: always
+    build: ./malicious-server
+    networks:
+      vpcbr:
+        ipv4_address: 10.10.0.5
+    ports:
+      - "8080:80"
+  client:
+    restart: always
+    build: ./client
+    networks:
+      vpcbr:
+        ipv4_address: 10.10.0.6
+    dns:
+      - 10.10.0.2
+    ports:
+      - "6080:80"
+    environment:
+      - VNC_PASSWORD=password
+      - USER=root
 networks:
   vpcbr:
     driver: bridge
