@@ -2,11 +2,11 @@ name: Create and publish container images
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "lab"]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/security-lab-1
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        service: [cache, malicious-server, attacker, client, dnsmasq]
+        service: [attacker, client]
 
     steps:
       - name: Checkout repository
