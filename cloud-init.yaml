@@ -1,63 +1,56 @@
 #cloud-config
-
-hostname: dnspooq-server
-timezone: Asia/Tokyo
+hostname: ubuntu-server
+manage_etc_hosts: true
 
 users:
   - name: ubuntu
-    plain_text_passwd: ubuntu
-    lock_passwd: false
-    sudo: ALL=(ALL) NOPASSWD:ALL
     groups: sudo, docker
     shell: /bin/bash
-
-chpasswd:
-  list: |
-    ubuntu:ubuntu
-    root:ubuntu
-  expire: false
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    plain_text_passwd: "ubuntu"
+    lock_passwd: false
 
 ssh_pwauth: true
-disable_root: false
 
 write_files:
   - path: /etc/resolv.conf
+    permissions: '0644'
     content: |
       nameserver 8.8.8.8
       nameserver 1.1.1.1
       nameserver 8.8.4.4
-    owner: root:root
-    permissions: '0644'
-
-package_update: true
-package_upgrade: true
-
-packages:
-  - curl
-  - wget
-  - git
-  - vim
-  - htop
-  - net-tools
-  - dnsutils
 
 runcmd:
   - systemctl disable systemd-resolved
   - systemctl stop systemd-resolved
-  - sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-  - sed -i 's/^#PermitRootLogin.*$/PermitRootLogin yes/' /etc/ssh/sshd_config
-  - systemctl restart sshd
-  - sleep 10
-  - ping -c 3 google.com
+  - sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  - sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+  - systemctl restart ssh
   - apt update
   - apt upgrade -y
-  - apt install -y docker.io docker-compose
+  - apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  - bash -c "echo 'deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable' > /etc/apt/sources.list.d/docker.list"
+  - apt update
+  - apt install -y docker-ce docker-ce-cli containerd.io
   - systemctl start docker
   - systemctl enable docker
   - usermod -aG docker ubuntu
-  - mkdir -p /home/ubuntu/dnspooq
-  - chown ubuntu:ubuntu /home/ubuntu/dnspooq
-  - echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
-  - sysctl -p
-  - docker --version
-  - docker-compose --version
+  - curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+  - apt install -y \
+      git \
+      curl \
+      wget \
+      net-tools \
+      dnsutils \
+      rsync \
+      openssh-client \
+      tcpdump \
+      wireshark-common \
+      iptables-persistent \
+      python3 \
+      python3-pip \
+      vim \
+      htop
